@@ -1,4 +1,4 @@
-`+import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,14 +21,12 @@ export async function GET(request: NextRequest) {
     let locationData = null;
     try {
       // Using ipapi.co as a free service (you can replace with other services)
-      const locationResponse = await fetch(
-        `https://ipapi.co/${ip}/json/`,
-        {
-          headers: {
-            "User-Agent": "NetworkDetailsApp/1.0",
-          },
-        }
-      );
+      const apiUrl = "https://ipapi.co/" + ip + "/json/";
+      const locationResponse = await fetch(apiUrl, {
+        headers: {
+          "User-Agent": "NetworkDetailsApp/1.0",
+        },
+      });
       
       if (locationResponse.ok) {
         locationData = await locationResponse.json();
