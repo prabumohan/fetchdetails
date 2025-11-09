@@ -5,17 +5,27 @@ export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get basic info from headers
-    const ip = request.headers.get("cf-connecting-ip") || 
-               request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-               request.headers.get("x-real-ip") || 
-               "Unknown";
+    // Get IP from headers (works with or without Cloudflare)
+    const cfIp = request.headers.get("cf-connecting-ip");
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const realIp = request.headers.get("x-real-ip");
+    
+    let ip = "Unknown";
+    if (cfIp) {
+      ip = cfIp;
+    } else if (forwardedFor) {
+      ip = forwardedFor.split(",")[0].trim();
+    } else if (realIp) {
+      ip = realIp;
+    }
 
     const userAgent = request.headers.get("user-agent") || "Unknown";
     
-    // Get Cloudflare headers
+    // Get Cloudflare geolocation headers (will be "Unknown" if not available)
+    // These are only available when deployed on Cloudflare Pages
     const countryCode = request.headers.get("cf-ipcountry") || "Unknown";
     const city = request.headers.get("cf-ipcity") || "Unknown";
+    const continent = request.headers.get("cf-ipcontinent") || "Unknown";
     const timezone = request.headers.get("cf-iptimezone") || "UTC";
     const isp = request.headers.get("cf-ipasnum") || "Unknown";
     const asn = request.headers.get("cf-ipasn") || "Unknown";
@@ -55,16 +65,16 @@ export async function GET(request: NextRequest) {
     const response = {
       ip: ip,
       location: {
-        city: city,
-        region: "Unknown",
-        country: countryCode,
-        countryCode: countryCode,
-        postal: "Unknown",
+        city: city !== "Unknown" ? city : "Unknown",
+        region: continent !== "Unknown" ? continent : "Unknown",
+        country: countryCode !== "Unknown" ? countryCode : "Unknown",
+        countryCode: countryCode !== "Unknown" ? countryCode : "Unknown",
+        postal: "Unknown", // Not available from Cloudflare headers
         latitude: lat,
         longitude: lon,
         timezone: timezone,
-        isp: isp,
-        asn: asn,
+        isp: isp !== "Unknown" ? isp : "Unknown",
+        asn: asn !== "Unknown" ? asn : "Unknown",
       },
       browser: browser,
       os: os,
