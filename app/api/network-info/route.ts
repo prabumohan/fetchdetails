@@ -35,30 +35,26 @@ export async function GET(request: NextRequest) {
     const timezone = "UTC";
 
     // Try to get location info from IP (using a free service)
+    // Skip external API call for now to avoid timeout issues
     let locationData = null;
-    if (ip && ip !== "Unknown" && !ip.includes(":")) {
-      try {
-        const apiUrl = `https://ipapi.co/${ip}/json/`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-        
-        const locationResponse = await fetch(apiUrl, {
-          headers: {
-            "User-Agent": "NetworkDetailsApp/1.0",
-          },
-          signal: controller.signal,
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (locationResponse.ok) {
-          locationData = await locationResponse.json();
-        }
-      } catch (error) {
-        // Silently fail - we'll use defaults
-        console.error("Location API error:", error);
-      }
-    }
+    // Temporarily disabled external API to isolate the issue
+    // if (ip && ip !== "Unknown" && !ip.includes(":")) {
+    //   try {
+    //     const apiUrl = `https://ipapi.co/${ip}/json/`;
+    //     const locationResponse = await fetch(apiUrl, {
+    //       headers: {
+    //         "User-Agent": "NetworkDetailsApp/1.0",
+    //       },
+    //     });
+    //     
+    //     if (locationResponse.ok) {
+    //       locationData = await locationResponse.json();
+    //     }
+    //   } catch (error) {
+    //     // Silently fail - we'll use defaults
+    //     console.error("Location API error:", error);
+    //   }
+    // }
 
     const networkInfo = {
       ip: ip,
@@ -110,11 +106,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     // Return a basic response even on error
     const errorMessage = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
     
     return NextResponse.json(
       { 
         error: "Failed to fetch network information",
         details: errorMessage,
+        stack: stack,
         ip: request.headers.get("cf-connecting-ip") || "Unknown",
       },
       { 
