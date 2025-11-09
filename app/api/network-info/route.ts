@@ -5,11 +5,17 @@ export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get IP address from headers
-    const ip = request.headers.get("cf-connecting-ip") || 
-               request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-               request.headers.get("x-real-ip") || 
-               "Unknown";
+    // Get user's public IP address
+    // Priority: Cloudflare header (most reliable) > x-forwarded-for > x-real-ip
+    let ip = request.headers.get("cf-connecting-ip");
+    if (!ip) {
+      const forwarded = request.headers.get("x-forwarded-for");
+      if (forwarded) {
+        ip = forwarded.split(",")[0].trim();
+      } else {
+        ip = request.headers.get("x-real-ip") || "Unknown";
+      }
+    }
 
     // Get basic info
     const userAgent = request.headers.get("user-agent") || "Unknown";
