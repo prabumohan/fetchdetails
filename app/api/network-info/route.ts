@@ -35,54 +35,24 @@ export async function GET(request: NextRequest) {
     const timezone = "UTC";
 
     // Try to get location info from IP (using a free service)
-    // Skip external API call for now to avoid timeout issues
-    let locationData = null;
     // Temporarily disabled external API to isolate the issue
-    // if (ip && ip !== "Unknown" && !ip.includes(":")) {
-    //   try {
-    //     const apiUrl = `https://ipapi.co/${ip}/json/`;
-    //     const locationResponse = await fetch(apiUrl, {
-    //       headers: {
-    //         "User-Agent": "NetworkDetailsApp/1.0",
-    //       },
-    //     });
-    //     
-    //     if (locationResponse.ok) {
-    //       locationData = await locationResponse.json();
-    //     }
-    //   } catch (error) {
-    //     // Silently fail - we'll use defaults
-    //     console.error("Location API error:", error);
-    //   }
-    // }
+    // Will re-enable once basic functionality is confirmed
+    const locationData: any = null;
 
     const networkInfo = {
       ip: ip,
-      location: locationData
-        ? {
-            city: locationData.city || "Unknown",
-            region: locationData.region || "Unknown",
-            country: locationData.country_name || "Unknown",
-            countryCode: locationData.country_code || "Unknown",
-            postal: locationData.postal || "Unknown",
-            latitude: locationData.latitude || null,
-            longitude: locationData.longitude || null,
-            timezone: locationData.timezone || timezone,
-            isp: locationData.org || "Unknown",
-            asn: locationData.asn || "Unknown",
-          }
-        : {
-            city: "Unknown",
-            region: "Unknown",
-            country: "Unknown",
-            countryCode: "Unknown",
-            postal: "Unknown",
-            latitude: null,
-            longitude: null,
-            timezone: timezone,
-            isp: "Unknown",
-            asn: "Unknown",
-          },
+      location: {
+        city: "Unknown",
+        region: "Unknown",
+        country: "Unknown",
+        countryCode: "Unknown",
+        postal: "Unknown",
+        latitude: null,
+        longitude: null,
+        timezone: timezone,
+        isp: "Unknown",
+        asn: "Unknown",
+      },
       browser: browserInfo.browser,
       os: browserInfo.os,
       device: browserInfo.device,
