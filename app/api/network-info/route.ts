@@ -32,25 +32,37 @@ export async function GET(request: NextRequest) {
     let locationData = null;
     try {
       // Using ipapi.co as a free service (you can replace with other services)
-      const apiUrl = "https://ipapi.co/" + ip + "/json/";
-      const locationResponse = await fetch(apiUrl, {
-        headers: {
-          "User-Agent": "NetworkDetailsApp/1.0",
-        },
-      });
-      
-      if (locationResponse.ok) {
-        locationData = await locationResponse.json();
+      // Skip if IP is "Unknown" or invalid
+      if (ip && ip !== "Unknown" && !ip.includes(":")) {
+        const apiUrl = "https://ipapi.co/" + ip + "/json/";
+        const locationResponse = await fetch(apiUrl, {
+          headers: {
+            "User-Agent": "NetworkDetailsApp/1.0",
+          },
+        });
+        
+        if (locationResponse.ok) {
+          locationData = await locationResponse.json();
+        } else {
+          console.error("IP API returned status:", locationResponse.status);
+        }
       }
     } catch (error) {
       console.error("Error fetching location:", error);
+      // Continue without location data
     }
 
     // Parse user agent for browser/OS info
     const browserInfo = parseUserAgent(userAgent);
 
     // Get timezone from headers or default
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    let timezone = "UTC";
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (error) {
+      // Fallback to UTC if Intl is not available
+      console.error("Error getting timezone:", error);
+    }
 
     const networkInfo = {
       ip: ip,
@@ -100,8 +112,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching network info:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to fetch network information" },
+      { 
+        error: "Failed to fetch network information",
+        details: errorMessage 
+      },
       { status: 500 }
     );
   }
