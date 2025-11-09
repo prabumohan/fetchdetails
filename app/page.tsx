@@ -1,6 +1,9 @@
 import { headers } from "next/headers";
 import CopyButton from "@/components/CopyButton";
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const headersList = await headers();
   
