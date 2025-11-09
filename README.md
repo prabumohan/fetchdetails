@@ -73,7 +73,7 @@ npm run build:cf
 2. Go to your Cloudflare Pages dashboard → Your Project → **Settings** → **Builds & deployments**
 3. Update the build configuration:
    - **Build command**: Change from `npm run build` to `npm run build:cf`
-   - **Build output directory**: Set to `.vercel/output/static`
+   - **Build output directory**: Set to `.vercel/output` (NOT `.vercel/output/static`)
    - **Deploy command**: Set to `npm run deploy:cf`
      - This is a no-op command that does nothing (Cloudflare Pages deploys automatically after build)
      - If you can't set a deploy command, try leaving it empty or using: `echo "Deploy handled by Cloudflare Pages"`
@@ -81,7 +81,8 @@ npm run build:cf
 
 **Why this is needed:**
 - `npm run build:cf` runs both Next.js build AND the Cloudflare Pages adapter
-- The output directory `.vercel/output/static` is where the adapter places files
+- The output directory `.vercel/output` contains both static files and functions
+- **IMPORTANT**: Use `.vercel/output` (not `.vercel/output/static`) as the build output directory
 - No deploy command is needed - Cloudflare Pages handles deployment automatically after build
 
 ### Deploy to Vercel (Alternative)
