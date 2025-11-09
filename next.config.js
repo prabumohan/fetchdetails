@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Cloudflare Pages compatibility
-  output: 'standalone',
   // Ensure proper webpack configuration
   webpack: (config, { isServer }) => {
     if (!isServer) {

@@ -18,7 +18,7 @@ A modern, beautiful website to display your network information including IP add
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Deployment Ready**: Works with Vercel, Netlify, or any Node.js hosting
+- **Deployment**: Cloudflare Pages compatible
 
 ## Getting Started
 
@@ -56,17 +56,25 @@ npm run build
 npm start
 ```
 
-## How It Works
+### Build for Cloudflare Pages
 
-The application uses:
-- Next.js API routes to fetch network information
-- Client-side headers to detect IP address (works with proxies)
-- External IP geolocation service (ipapi.co) for location data
-- User agent parsing for browser/OS detection
+```bash
+npm run build
+npm run build:cf
+```
 
 ## Deployment
 
-### Deploy to Vercel (Recommended)
+### Deploy to Cloudflare Pages
+
+1. Push your code to GitHub
+2. In Cloudflare Pages dashboard:
+   - **Build command**: `npm run build && npm run build:cf`
+   - **Build output directory**: `.vercel/output/static`
+   - **Root directory**: (leave empty or set to project root)
+3. Deploy!
+
+### Deploy to Vercel (Alternative)
 
 1. Push your code to GitHub
 2. Import your repository on [Vercel](https://vercel.com)
@@ -78,6 +86,14 @@ The application uses:
 2. Import your repository on [Netlify](https://netlify.com)
 3. Build command: `npm run build`
 4. Publish directory: `.next`
+
+## How It Works
+
+The application uses:
+- Next.js API routes to fetch network information
+- Client-side headers to detect IP address (works with proxies)
+- External IP geolocation service (ipapi.co) for location data
+- User agent parsing for browser/OS detection
 
 ## Customization
 
@@ -92,4 +108,3 @@ MIT License - feel free to use this project for your own purposes!
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
-
