@@ -3,12 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
+// Use Edge runtime for Cloudflare Pages compatibility
+export const runtime = 'edge';
+
 export async function GET(request: NextRequest) {
   try {
     // Get client IP from headers (works with proxies/load balancers)
+    // Note: request.ip is not available in Edge runtime, so we rely on headers
     const forwardedFor = request.headers.get("x-forwarded-for");
     const realIp = request.headers.get("x-real-ip");
-    const ip = forwardedFor?.split(",")[0] || realIp || request.ip || "Unknown";
+    const cfConnectingIp = request.headers.get("cf-connecting-ip"); // Cloudflare specific
+    const ip = forwardedFor?.split(",")[0]?.trim() || 
+               realIp || 
+               cfConnectingIp || 
+               "Unknown";
 
     // Get user agent
     const userAgent = request.headers.get("user-agent") || "Unknown";
