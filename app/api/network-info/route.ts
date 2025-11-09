@@ -8,14 +8,14 @@ export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get client IP from headers (works with proxies/load balancers)
-    // Note: request.ip is not available in Edge runtime, so we rely on headers
+    // Get client IP from headers (Cloudflare specific header)
+    const cfConnectingIp = request.headers.get("cf-connecting-ip");
     const forwardedFor = request.headers.get("x-forwarded-for");
     const realIp = request.headers.get("x-real-ip");
-    const cfConnectingIp = request.headers.get("cf-connecting-ip"); // Cloudflare specific
-    const ip = forwardedFor?.split(",")[0]?.trim() || 
+    
+    const ip = cfConnectingIp || 
+               (forwardedFor ? forwardedFor.split(",")[0].trim() : null) || 
                realIp || 
-               cfConnectingIp || 
                "Unknown";
 
     // Get user agent
@@ -28,40 +28,36 @@ export async function GET(request: NextRequest) {
     const referer = request.headers.get("referer") || "Direct";
     const origin = request.headers.get("origin") || "Unknown";
 
+    // Parse user agent for browser/OS info
+    const browserInfo = parseUserAgent(userAgent);
+
+    // Get timezone - use UTC as default for Edge runtime compatibility
+    const timezone = "UTC";
+
     // Try to get location info from IP (using a free service)
     let locationData = null;
-    try {
-      // Using ipapi.co as a free service (you can replace with other services)
-      // Skip if IP is "Unknown" or invalid
-      if (ip && ip !== "Unknown" && !ip.includes(":")) {
-        const apiUrl = "https://ipapi.co/" + ip + "/json/";
+    if (ip && ip !== "Unknown" && !ip.includes(":")) {
+      try {
+        const apiUrl = `https://ipapi.co/${ip}/json/`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
         const locationResponse = await fetch(apiUrl, {
           headers: {
             "User-Agent": "NetworkDetailsApp/1.0",
           },
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
         
         if (locationResponse.ok) {
           locationData = await locationResponse.json();
-        } else {
-          console.error("IP API returned status:", locationResponse.status);
         }
+      } catch (error) {
+        // Silently fail - we'll use defaults
+        console.error("Location API error:", error);
       }
-    } catch (error) {
-      console.error("Error fetching location:", error);
-      // Continue without location data
-    }
-
-    // Parse user agent for browser/OS info
-    const browserInfo = parseUserAgent(userAgent);
-
-    // Get timezone from headers or default
-    let timezone = "UTC";
-    try {
-      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    } catch (error) {
-      // Fallback to UTC if Intl is not available
-      console.error("Error getting timezone:", error);
     }
 
     const networkInfo = {
@@ -108,17 +104,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(networkInfo, {
       headers: {
         "Cache-Control": "no-store, max-age=0",
+        "Content-Type": "application/json",
       },
     });
   } catch (error) {
-    console.error("Error fetching network info:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    // Return a basic response even on error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
     return NextResponse.json(
       { 
         error: "Failed to fetch network information",
-        details: errorMessage 
+        details: errorMessage,
+        ip: request.headers.get("cf-connecting-ip") || "Unknown",
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
   }
 }
@@ -127,6 +131,10 @@ function parseUserAgent(userAgent: string) {
   let browser = "Unknown";
   let os = "Unknown";
   let device = "Desktop";
+
+  if (!userAgent || userAgent === "Unknown") {
+    return { browser, os, device };
+  }
 
   // Browser detection
   if (userAgent.includes("Chrome") && !userAgent.includes("Edg")) {
@@ -158,4 +166,3 @@ function parseUserAgent(userAgent: string) {
 
   return { browser, os, device };
 }
-
