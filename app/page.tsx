@@ -1,16 +1,31 @@
-import { headers } from "next/headers";
+"use client";
+
+import { useEffect, useState } from "react";
 import CopyButton from "@/components/CopyButton";
 
-export const runtime = 'edge';
-export const dynamic = 'force-dynamic';
+export default function Home() {
+  const [ip, setIp] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function Home() {
-  const headersList = await headers();
-  
-  const ip = headersList.get("cf-connecting-ip") || 
-             headersList.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-             headersList.get("x-real-ip") || 
-             "Unknown";
+  useEffect(() => {
+    fetch("/api/network-info")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setIp(data.ip || "Unknown");
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching IP:", err);
+        setError(err.message || "Failed to get IP address");
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -19,12 +34,43 @@ export default async function Home() {
           Your IP Address
         </h1>
         
-        <div className="bg-white rounded-lg shadow-xl p-8 md:p-12">
-          <div className="text-5xl md:text-7xl font-mono font-bold text-indigo-600 mb-4">
-            {ip}
+        {loading && (
+          <div className="text-2xl text-gray-600">Loading...</div>
+        )}
+        
+        {error && (
+          <div className="bg-white rounded-lg shadow-xl p-8 md:p-12">
+            <div className="text-2xl text-red-600 mb-4">Error: {error}</div>
+            <button
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                fetch("/api/network-info")
+                  .then((res) => res.json())
+                  .then((data) => {
+                    setIp(data.ip || "Unknown");
+                    setLoading(false);
+                  })
+                  .catch((err) => {
+                    setError(err.message);
+                    setLoading(false);
+                  });
+              }}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              Retry
+            </button>
           </div>
-          <CopyButton ip={ip} />
-        </div>
+        )}
+        
+        {!loading && !error && ip && (
+          <div className="bg-white rounded-lg shadow-xl p-8 md:p-12">
+            <div className="text-5xl md:text-7xl font-mono font-bold text-indigo-600 mb-4">
+              {ip}
+            </div>
+            <CopyButton ip={ip} />
+          </div>
+        )}
       </div>
     </main>
   );
