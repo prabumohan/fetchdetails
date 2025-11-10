@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "wrangler pages dev",
-    "build": "echo 'No build needed for static site'",
-    "build:cf": "echo 'No build needed for static site'",
+    "build": "node build.js",
+    "build:cf": "npm run build",
     "deploy": "echo 'Deployment handled automatically by Cloudflare Pages'"
   },
   "devDependencies": {
