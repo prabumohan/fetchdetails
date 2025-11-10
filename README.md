@@ -29,7 +29,7 @@ A simple web page that displays your IP address. Built for Cloudflare Pages.
 2. Go to Cloudflare Pages dashboard
 3. Connect your repository
 4. Build settings:
-   - **Build command**: Leave empty (no build needed)
+   - **Build command**: `npm run build:cf` (or leave empty - both work)
    - **Build output directory**: Leave empty or set to `/`
 5. Deploy!
 
